@@ -40,7 +40,7 @@ static inline bool _reportResult(kern_return_t result, const char *operation, co
     return true;
 }
 
-bool TPCircularBufferInit(TPCircularBuffer *buffer, int length) {
+bool TPCircularBufferInit(TPCircularBuffer *buffer, int32_t length) {
 
     // Keep trying until we get our buffer, needed to handle race conditions
     int retries = 3;
@@ -117,6 +117,7 @@ bool TPCircularBufferInit(TPCircularBuffer *buffer, int length) {
         buffer->buffer = (void*)bufferAddress;
         buffer->fillCount = 0;
         buffer->head = buffer->tail = 0;
+        buffer->atomic = true;
         
         return true;
     }
@@ -133,4 +134,8 @@ void TPCircularBufferClear(TPCircularBuffer *buffer) {
     if ( TPCircularBufferTail(buffer, &fillCount) ) {
         TPCircularBufferConsume(buffer, fillCount);
     }
+}
+
+void  TPCircularBufferSetAtomic(TPCircularBuffer *buffer, bool atomic) {
+    buffer->atomic = atomic;
 }
