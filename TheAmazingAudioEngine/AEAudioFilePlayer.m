@@ -40,7 +40,7 @@
     volatile int32_t _playbackStoppedCallbackScheduled;
     BOOL _running;
     uint64_t _startTime;
-    AEAudioControllerRenderCallback _superRenderCallback;
+    AEAudioRenderCallback _superRenderCallback;
 }
 @property (nonatomic, strong, readwrite) NSURL * url;
 @property (nonatomic, weak) AEAudioController * audioController;
@@ -157,8 +157,9 @@ UInt32 AEAudioFilePlayerGetPlayhead(__unsafe_unretained AEAudioFilePlayer * THIS
     if ( !AECheckOSStatus(result, "AudioFileGetProperty(kAudioFilePropertyDataFormat)") ) {
         *error = [NSError errorWithDomain:NSOSStatusErrorDomain code:result
                                  userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Couldn't read the audio file", @"")}];
+        AudioFileClose(_audioFile);
+        _audioFile = NULL;
         return NO;
-        
     }
     
     // Determine length in frames (in original file's sample rate)
@@ -179,10 +180,21 @@ UInt32 AEAudioFilePlayerGetPlayhead(__unsafe_unretained AEAudioFilePlayer * THIS
         if ( !AECheckOSStatus(result, "AudioFileGetProperty(kAudioFilePropertyAudioDataPacketCount)") ) {
             *error = [NSError errorWithDomain:NSOSStatusErrorDomain code:result
                                      userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Couldn't read the audio file", @"")}];
+            AudioFileClose(_audioFile);
+            _audioFile = NULL;
             return NO;
         }
         fileLengthInFrames = packetCount * _fileDescription.mFramesPerPacket;
     }
+    
+    if ( fileLengthInFrames == 0 ) {
+        *error = [NSError errorWithDomain:NSOSStatusErrorDomain code:-50
+                                 userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"This audio file is empty", @"")}];
+        AudioFileClose(_audioFile);
+        _audioFile = NULL;
+        return NO;
+    }
+    
     _lengthInFrames = (UInt32)fileLengthInFrames;
     self.url = url;
     
@@ -259,7 +271,7 @@ static OSStatus renderCallback(__unsafe_unretained AEAudioFilePlayer *THIS,
     
     uint32_t silentFrames = THIS->_startTime && THIS->_startTime > time->mHostTime
         ? AESecondsFromHostTicks(THIS->_startTime - time->mHostTime) * THIS->_unitOutputDescription.mSampleRate : 0;
-    AECreateStackCopyOfAudioBufferList(scratchAudioBufferList, audio, silentFrames * THIS->_unitOutputDescription.mBytesPerFrame);
+    AEAudioBufferListCopyOnStack(scratchAudioBufferList, audio, silentFrames * THIS->_unitOutputDescription.mBytesPerFrame);
     if ( silentFrames > 0 ) {
         // Start time is offset into this buffer - silence beginning of buffer
         for ( int i=0; i<audio->mNumberBuffers; i++) {
@@ -310,7 +322,7 @@ static OSStatus renderCallback(__unsafe_unretained AEAudioFilePlayer *THIS,
     return noErr;
 }
 
--(AEAudioControllerRenderCallback)renderCallback {
+-(AEAudioRenderCallback)renderCallback {
     return renderCallback;
 }
 
