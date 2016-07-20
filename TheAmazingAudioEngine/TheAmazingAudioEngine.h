@@ -44,6 +44,7 @@ extern "C" {
 #import "AEBlockScheduler.h"
 #import "AEUtilities.h"
 #import "AEMessageQueue.h"
+#import "AEAudioBufferManager.h"
 
 /*!
 @mainpage
@@ -546,8 +547,8 @@ self.filter = [AEBlockFilter filterWithBlock:^(AEAudioFilterProducer producer,
  @link AEAudioPlayable @endlink *and* the @link AEAudioReceiver @endlink protocols, so that it acts as both an
  audio receiver and an audio source.
  
- To use it, initialize it using @link AEPlaythroughChannel::initWithAudioController: initWithAudioController: @endlink,
- then add it as an input receiver using AEAudioController's @link AEAudioController::addInputReceiver: addInputReceiver: @endlink
+ To use it, initialize it then add it as an input receiver using 
+ AEAudioController's @link AEAudioController::addInputReceiver: addInputReceiver: @endlink
  and add it as a channel using @link AEAudioController::addChannels: addChannels: @endlink.
  
  @section Recording Recording
@@ -683,15 +684,12 @@ self.filter = [AEBlockFilter filterWithBlock:^(AEAudioFilterProducer producer,
  
  - Receive Audiobus audio by creating an ABReceiverPort and passing it to The Amazing Audio Engine
    via AEAudioController's [audiobusReceiverPort](@ref AEAudioController::audiobusReceiverPort) property.
- - Send your app's audio output via Audiobus by creating an ABSenderPort and assigning it to
-   [audiobusSenderPort](@ref AEAudioController::audiobusSenderPort).
+ - Send your app's audio output via Audiobus by creating an ABSenderPort and passing it your [audio unit](@ref AEAudioController::audioUnit).
  - Send one individual channel via Audiobus by assigning a new ABSenderPort via
    @link AEAudioController::setAudiobusSenderPort:forChannel: setAudiobusSenderPort:forChannel: @endlink
  - Send a channel group via Audiobus by assigning a new ABSenderPort via
    @link AEAudioController::setAudiobusSenderPort:forChannelGroup: setAudiobusSenderPort:forChannelGroup: @endlink
- - Filter Audiobus audio by creating an ABFilterPort with AEAudioController's [audioUnit](@ref AEAudioController::audioUnit),
-   and passing it to The Amazing Audio Engine via AEAudioController's [audiobusFilterPort](@ref AEAudioController::audiobusFilterPort)
-   property.
+ - Filter Audiobus audio by creating an ABFilterPort with AEAudioController's [audioUnit](@ref AEAudioController::audioUnit).
  
  
  Take a look at the header documentation for the @link AEAudioController(AudiobusAdditions) Audiobus functions @endlink
@@ -789,6 +787,9 @@ self.filter = [AEBlockFilter filterWithBlock:^(AEAudioFilterProducer producer,
  
  Note: Do not use those functions above that perform memory allocation or deallocation from within the Core Audio thread,
  as this may cause performance problems.
+ 
+ Additionally, the AEAudioBufferManager class lets you perform standard ARC/retain-release memory management with
+ AudioBufferLists.
  
  @section Audio-Formats Defining Audio Formats
  

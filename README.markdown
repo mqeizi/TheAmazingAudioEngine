@@ -36,7 +36,32 @@ freely, subject to the following restrictions:
 Changelog
 ---------
 
-### In-Development: 1.5.3 (master branch)
+### 1.5.7
+
+- Added [Realtime Watchdog](https://github.com/TheAmazingAudioEngine/RealtimeWatchdog)
+- Fixed a spurious audio system restart issue
+
+### 1.5.6
+
+- Replaced internal use of synchronous cross-thread messaging with async messaging, to avoid risk of deadlocks and other timing issues
+- Fixed a crash that can occur when input format is changing
+- Watch for audio unit stream format changes in order to better react to sample rate changes
+- Implemented AEMessageQueue message exchange blocks
+
+### 1.5.5
+
+- Added AEAudioBufferManager class, to enable management of AudioBufferList structures using normal ARC/retain-release memory management techniques
+- Addressed a problem introduced in 1.5.3 that could cause a 30s hang when restarting audio system
+- Revised timestamp management with Audiobus/IAA: now, TAAE will pass uncompensated timestamps to ABReceiverPortReceive, and will assume incoming timestamps, when hosted via IAA or Audiobus, are uncompensated.
+
+### 1.5.4
+
+- Fixed an output latency compensation issue when hosted via Inter-App Audio
+- Deprecated "audiobusSenderPort" facility (use ABSenderPort's audioUnit initializer instead, with AEAudioController's audioUnit property)
+- Improved performance reports (made these less verbose, added percentage of render budget)
+- Fixed a crash when using AEPlaythroughChannel and changing the sample rate
+
+### 1.5.3
 
 - Added AEAudioBufferListCreateOnStack utility
 - Enable automaticLatencyManagement by default
@@ -45,6 +70,7 @@ Changelog
 - Added playAtTime: facility to AEMemoryBufferPlayer (thanks to Anton Holmberg)
 - Added setup/teardown methods to AEInputReceiver
 - Fixed missing setup/teardown calls to input filters
+- Replaced AEPlaythroughChannel initializer
 
 ### 1.5.2
 
